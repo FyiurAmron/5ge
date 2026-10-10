@@ -1,0 +1,13 @@
+<Project Sdk="Godot.NET.Sdk/4.8.0-dev.7">
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>Eepch</RootNamespace>
+    <AssemblyName>EepchGodot</AssemblyName>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- the headless test runner has its own project -->
+    <Compile Remove="Tests/**" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,29 @@
+#!/bin/bash
+# Sanitizing dotnet shim for Godot Linux -> Windows cross-exports.
+# Godot 4.8-dev7 (mono) spawns `dotnet publish` with a broken MSBUILD_EXE_PATH
+# (SDK dir concatenated without a separator, e.g. `.../sdk/11.0.100-xxxMSBuild.dll`).
+# The .NET CLI derives broken MSBuildSDKsPath/MSBuildExtensionsPath from it, so
+# SDK resolution (Godot.NET.Sdk) and RID inference fail with MSB4236 / MSB4044.
+# This shim unsets the poisoned variables so dotnet falls back to correct defaults.
+# Pure ASCII.
+unset MSBUILD_EXE_PATH
+unset MSBuildSDKsPath
+unset MSBuildExtensionsPath
+unset MSBUILDSDKsPath
+real=""
+IFS=':' read -ra dirs <<< "$PATH"
+me="$(dirname "$(readlink -f "$0")")"
+for d in "${dirs[@]}"; do
+    if [ "$d" != "$me" ] && [ -x "$d/dotnet" ] && [ ! -d "$d/dotnet" ]; then
+        real="$d/dotnet"
+        break
+    fi
+done
+if [ -z "$real" ] && [ -x "$HOME/.dotnet/dotnet" ]; then
+    real="$HOME/.dotnet/dotnet"
+fi
+if [ -z "$real" ]; then
+    echo "dotnet-sanitize: real dotnet not found in PATH" >&2
+    exit 1
+fi
+exec "$real" "$@"

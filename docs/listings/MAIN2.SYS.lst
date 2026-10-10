@@ -1,0 +1,59 @@
+1 DIM P$(40*16),T$(40):TEZ=1:POKE 580,1
+2 RESTORE 32000:FOR I=1 TO 16:READ T$:P$(I*40-39,I*40)=T$:NEXT I
+10 EXEC DL:OPEN #1,4,0,"D:HEAD.PIC":BGET #1,41472,40*81:CLOSE #1
+15 OPEN #1,4,0,"D:POLITEM.CHR":BGET #1,184*256,1024:CLOSE #1:POKE 756,184:POKE 559,34
+20 POKE 752,1:FOR I=1 TO 11:?:NEXT I
+30 ? "\I                                        \i"
+35 ?:? "           Muzyka by The Zio"
+40 ?:? "  Copyright (c) 1991 Macio Systems Ltd":?
+50 ?:?:? "          Naciśnij START ..."
+60 DIM PER$(64):PER$="źźź1źźź źźź1źźź źźź1źźź źźź1źźź ź ź1źźź źźź1źźź źźź1źźź źźź1ź ź "
+65 RESTORE 499
+70 FOR I=1 TO LEN(PER$):A=ASC(PER$(I,I))
+75 IF A<>0 THEN GLP=15:DZ=A
+76 READ DW:IF DW=-1 THEN RESTORE 500:READ DW
+77 IF DW<>0 THEN DZW=DW:GLDZ=15
+80 FOR J=15 TO 0 STEP -0.5:SOUND 1,0,8,J:NEXT J
+90 SOUND 0,DZ,8,GLP:GLP=GLP-5:IF GLP<0 THEN GLP=0
+91 SOUND 2,DZW,10,GLDZ
+92 SOUND 3,DZW+2,10,5
+95 ZM=ZM+1:IF ZM>25 THEN ZM=0:POSITION 0,11:? P$(TEZ*40-39,TEZ*40);:TEZ=TEZ+1:IF TEZ>16 THEN TEZ=1
+100 IF PEEK(53279)=7 THEN NEXT I:GOTO 70
+110 SOUND:POKE 559,0:TRAP 120:RUN "D:MAIN3.SYS"
+120 ? "}":FOR I=1 TO 10:?:NEXT I:POKE 559,34:? "Włóż dyskietkę z grą i naciśńij RETURN":GET A:GOTO 110
+400 PROC DL
+405 GRAPHICS 0:SETCOLOR 2,0,0:POKE 559,0
+407 DL=DPEEK(560)
+408 FOR I=0 TO 32:POKE DL-1024+I,PEEK(DL+I):NEXT I:DPOKE DL,1536
+410 EK=DPEEK(DL+4)+(40*11):POKE 82,0:POKE 83,39
+415 DATA 112,112,112,78,0,162
+420 RESTORE 415:FOR I=1536 TO 1541:READ A:POKE I,A:NEXT I:FOR I=1542 TO 1628:POKE I,14:NEXT I
+425 POKE 1629,66:DPOKE 1630,EK:POKE 1632,1:DPOKE 1633,DL+17
+430 DPOKE DL+32,1536:DPOKE 560,1536
+431 POKE 712,196:POKE 708,18:POKE 709,254:POKE 710,152
+435 ENDPROC ?O00
+499 DATA 0,0,0
+500 DATA 108,0,108,0,108,0,144,0,136,0,136,0,136,0,144,0
+501 DATA 108,0,108,0,108,0,144,0,136,0,136,0,136,0,144,0
+502 DATA 108,0,108,0,108,0,144,0,136,0,136,0,136,0,144,0
+503 DATA 108,0,108,0,108,0,144,0,136,0,136,0,136,0,144,0
+504 DATA 102,0,102,0,102,0,144,0,136,0,136,0,136,0,144,0
+505 DATA 102,0,102,0,102,0,144,0,136,0,136,0,136,0,144,0
+506 DATA 102,0,102,0,102,0,144,0,136,0,136,0,136,0,144,0
+507 DATA 102,0,102,0,102,0,144,0,136,0,136,0,136,0,144,0,-1
+32000 DATA \I        Napisał Maciej Czarnota         \i
+32001 DATA \I        Napisał Maciej Czarnota         \i
+32002 DATA \I                                        \i
+32003 DATA \I Uwaga !Ta gra jest nieco wulgarna,więc \i
+32004 DATA \I  jeśli Twoja rodzinka jest w okolicy   \i
+32005 DATA \Ito wstrzymaj się - najlepiej do późnych \i
+32006 DATA \I godzin nocnych ....                    \i
+32007 DATA \I                                        \i
+32008 DATA \I     Specjalne pozdrowienia dla ...     \i
+32009 DATA \I               Rydzyka                  \i
+32010 DATA \I               Bielaka                  \i
+32011 DATA \I I wszystkich ludzi z LX LO w WARSZAWIE \i
+32012 DATA \I                                        \i
+32013 DATA \ITen program napisany jest w Turbo-Basicu\i
+32014 DATA \I   (podziekowania dla F.Ostrowskiego)   \i
+32015 DATA \I                                        \i

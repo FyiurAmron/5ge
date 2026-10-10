@@ -1,0 +1,3 @@
+; Copy to export_presets.cfg (or create presets in the editor).  The only important line:
+; the raw disk images are not Godot resources, so they must be added to the export filter:
+include_filter="data/*"

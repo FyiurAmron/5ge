@@ -1,0 +1,621 @@
+0 POKE 730,2:GRAPHICS 8+16:POKE 702,0:POKE 580,1:POKE 566,166
+10 EXEC DL:DIM T$(120),IN$(120),P$(180),PRZED$(100),O1$(120),O2$(120):RESTORE 32050:POKE 559,34
+11 OPEN #1,4,0,"D:POLITEM.CHR":BGET #1,184*256,1024:CLOSE #1:POKE 756,184
+12 ACD=1:EXEC CLESCR:EXEC GETDISK
+21 FOR I=0 TO 5:READ T$:P$(I*30+1,I*30+30)=T$:NEXT I
+22 RESTORE 32060:READ PRZED$
+90 LOC=%0:EXEC CLESCR:TEKST=1:MONEY=50000
+91 ZATOCZKA=0:RYBAK=0:SRAM=0:SZKAT=0:PRAD=0:GOSP=0:DRZEWO=0
+100 EXEC LOCATION
+105 DO
+110 EXEC GCOM:EXEC ECOM
+190 LOOP
+200 PROC LOCATION
+201 J=0
+202 IF LOC=0 THEN EXEC GETPIC:ST=1:GOTO 205
+203 IF LOC=1 AND ST=1 THEN ST=0:GOTO 205
+204 EXEC GETPIC
+205 RESTORE 20000+LOC*10
+210 READ T$:IF T$="*" THEN GOTO 220
+215 J=J+1:IF J=4+(ABS(TEKST-1))*8 THEN EXEC GRET:J=0
+216 ? T$:GOTO 210
+220 IF LOC=%0 THEN LOC=%1:GOTO 202
+225 EXEC SPECIAL
+230 ? "Widzisz : ";:J=0:FOR H=1 TO 100:IF PRZED$(H,H)=CHR$(LOC)
+235 ITEM=H:EXEC GITEM:IF J=1 THEN ? ",";
+236 ? T$;:J=1
+240 ENDIF:NEXT H:T$="nic":IF J=1 THEN T$=""
+245 ? T$
+250 ? "Wyjscia : ";:J=0:FOR I=0 TO 5:IF P$(LOC+I*30,LOC+I*30)<>"ź"
+255 RESTORE 265:FOR H=1 TO I+1:READ T$:NEXT H:IF J=1 THEN ? ",";
+260 ? T$;:J=1:ENDIF:NEXT I:T$="nie ma":IF J=1 THEN T$=""
+265 DATA północ,południe,wschód,zachód,góra,dół
+270 ? T$
+290 ENDPROC
+295 PROC GRET:? "RETURN ";:GET A:? "\x9C";:ENDPROC
+300 PROC GCOM:O1$(1,1)="ź":O1$(120,120)="ź":O1$(2)=O1$:O2$=O1$:IN$=O1$:IN$="":O1$="":O2$=""
+310 ?:INPUT "Co robisz ?",IN$:IF IN$="" THEN 310
+315 O2$="*":FOR I=1 TO LEN(IN$):IF IN$(I,I)<>" " THEN O1$(I,I)=IN$(I,I):NEXT I:GOTO 330
+320 O2$=IN$(I+1)
+330 ENDPROC
+400 PROC ECOM:RESTORE 900:TRAP 40000
+405 READ T$,NUM:IF T$="*" THEN ? "Nie znam takiego polecenia":GOTO 430
+410 IF T$<>O1$ THEN GOTO 405
+420 GOSUB NUM
+430 ENDPROC
+700 PROC CHECKIF:J=0:EXEC ITEMG:IF ITEM=0 THEN J=1
+710 ENDPROC
+800 PROC GITEM:RESTORE 850:FOR I=1 TO ITEM:READ T$:NEXT I:ENDPROC
+810 PROC ITEMG:RESTORE 850:ITEM=0
+815 READ T$:IF T$="*" THEN ITEM=0:GOTO 830
+820 ITEM=ITEM+1:IF T$<>O2$ THEN GOTO 815
+830 ENDPROC
+850 DATA papier,kluczyk,łopatę,gówno 1,wędkę,hamburgera,piwo Leżajsk,piwo Okocim,piwo kuflowe,żyłkę
+851 DATA haczyk,wędzisko,gówno 2,siekierę,gówno 3,srajtaśmę,gówno 4,brudną srajtaśmę,żarcie,gówno 5,gówna,książkę
+899 DATA *
+900 DATA patrzę,1010,quit,1000,koniec,1000,spis,1020,inv,1020,i,1020,badam,2400,oglądam,2400
+901 DATA help,1300,pomocy,1300,słówka,1400,obrazki,1500,tekst,1600,text,1600,t,1600,o,1500
+902 DATA północ,2200,południe,2200,wschód,2200,zachód,2200,góra,2200,dół,2200
+903 DATA pn,2000,pd,2030,w,2060,z,2100,g,2130,d,2160,sprawdzam,2400
+904 DATA biorę,2300,zabieram,2300,podnoszę,2300,czytam,2600,rzucam,2800,zostawiam,2800,opuszczam,2800
+905 DATA piję,3000,zabijam,3200,atakuję,3200,morduję,3200,łowię,3400,wyławiam,3400
+906 DATA otwieram,3600,zamykam,3800,daję,4000,sram,4200,podcieram,4400,siadam,4600,wstaję,4800,kupuję,5000
+907 DATA ścinam,5200,rąbię,5200,szykuję,5600,składam,5600,wyłączam,5800,karmię,6000
+908 DATA kopię,6200,jem,6400
+949 DATA *,0
+1000 ? "Czy jesteś pewien (T/N) ?":GET A:IF A<>84 THEN RETURN
+1005 A=USR(DEC("E477"))
+1010 EXEC LOCATION:RETURN
+1020 ? "Niesiesz : ";:J=0
+1025 FOR H=1 TO 100:IF PRZED$(H,H)=CHR$(255) THEN ITEM=H:EXEC GITEM:J=1:? T$;",";
+1028 NEXT H:T$="nic":IF J=1 THEN T$="~"
+1029 ? T$:RETURN
+1300 RESTORE 26000+LOC:READ T$:IF T$="*" THEN T$="Rusz wreszcie tym swoim łbem!!"
+1301 ? T$:RETURN
+1400 ? "Słówka :":RESTORE 900
+1401 READ T$,NUM:IF T$="*" THEN 1499
+1405 ? T$,:GOTO 1401
+1499 ?:RETURN
+1500 IF TEKST=0 THEN TEKST=1:EXEC DL:EXEC GETPIC:EXEC CLESCR
+1510 GOTO 1610
+1600 IF TEKST=1 THEN TEKST=0:DPOKE 560,DL
+1610 ? "o.k.":RETURN
+2000 O1$="północ":GOTO 2200
+2030 O1$="południe":GOTO 2200
+2060 O1$="wschód":GOTO 2200
+2100 O1$="zachód":GOTO 2200
+2130 O1$="góra":GOTO 2200
+2160 O1$="dół"
+2200 IF SIAD=1 THEN ? "Chcesz chodzić na siedząco ??":RETURN
+2202 RESTORE 265:FOR I=0 TO 5:READ T$:IF O1$<>T$ THEN NEXT I
+2205 J=LOC+30*I:IF P$(J,J)="ź" THEN ? "Nie możesz iść w tym kierunku !!":RETURN
+2206 J=ASC(P$(J,J))
+2210 IF J<128 THEN LOC=J:EXEC LOCATION:RETURN
+2220 IF J=149
+2221 IF PRZED$(9,9)<>CHR$(255) THEN LOC=21:EXEC LOCATION:RETURN
+2225 ? "Chcesz wyjść razem z kuflem ?":RETURN
+2228 ENDIF
+2230 IF J=152
+2232 IF PRAD=1 THEN LOC=24:EXEC LOCATION:RETURN
+2235 ? "Kopnął cię prąd .Jesteś nieżywy.":GOTO 18000
+2240 ENDIF
+2299 J=J-128:GOTO 2210
+2300 IF O2$="gówno" THEN ? "Musisz jeszcze podać jego numer !":RETURN
+2301 EXEC CHECK
+2305 IF NIE=5 THEN ? "Nie możesz więcej nieść !":RETURN
+2310 IF PRZED$(ITEM,ITEM)<>CHR$(LOC) THEN ? "Nie ma tu tego przedmiotu!":RETURN
+2315 PRZED$(ITEM,ITEM)=CHR$(255):? "O.k.":GOTO 1020
+2400 IF O2$="*" THEN ? "Ale co ??":RETURN
+2401 IF O2$="portfel" THEN GOTO 2480
+2402 EXEC ITEMG:IF ITEM=0 THEN GOTO 2500
+2405 IF PRZED$(ITEM,ITEM)<>CHR$(255) THEN ? "Nie niesiesz tego przedmiotu!":RETURN
+2410 RESTORE 27500+ITEM:READ T$:? T$:RETURN
+2480 ? "Masz w nim ";MONEY;" złotych.":RETURN
+2500 RESTORE 27000
+2501 IF O2$="tabliczkę" THEN GOTO 2700
+2505 READ T$,O1$,NUM:IF T$=O2$ AND LOC=NUM THEN ? O1$:RETURN
+2510 IF T$="*" THEN ? "Nie możesz tego obejrzeć!":RETURN
+2515 GOTO 2505
+2600 IF O2$="tabliczkę" THEN GOTO 2700
+2601 IF O2$="cennik" THEN 2794
+2602 EXEC CHECK:RESTORE 2610+ITEM:READ T$:IF T$="*" THEN T$="Nic tu nie ma napisanego":RETURN
+2605 ? T$:RETURN
+2610 LOC=ASC(P$(I,I)):EXEC LOCATION:RETURN
+2611 DATA "Za znalezienie pięciu gówien eepcha -   nagroda $500.000.000"                       Podpisano :Książe Bolo
+2612 DATA *
+2613 DATA *
+2614 DATA *
+2615 DATA *
+2616 DATA *
+2617 DATA *
+2618 DATA *
+2619 DATA *
+2620 DATA *
+2621 DATA *
+2622 DATA *
+2623 DATA *
+2624 DATA *
+2625 DATA *
+2626 DATA Made by Celwiskoza Yelenia Goora.
+2627 DATA *
+2628 DATA *
+2629 DATA Produced by Eedeeotha Corp.
+2630 DATA *
+2631 DATA *
+2632 DATA "... gówno ludzkie ma identyczne właści-wości jak gówno Eepcha ..."
+2700 IF LOC=4
+2701 ? " Tu leży":? "  Johny Mc Vawakh (1921-1991)":? "Ostatni hodowca i obrońca Eepchów"
+2705 ENDIF
+2710 IF LOC=9
+2712 ? " Zamek księcia Bolka Miękkiego":? "Pana Wałlandii i Wysp Jeulandzkich"
+2714 ? " Nieupoważnionym wstęp wzbroniony."
+2718 ENDIF
+2720 IF LOC=18
+2721 ? " Uwaga ! Klamka i druty pod napięciem!"
+2723 ENDIF
+2749 RETURN
+2794 IF LOC<>22 THEN ? "Ale tu go nie ma !!":RETURN
+2795 ? "Hamburger - 10000 zł.":? "Piwo Leżajsk - 7500 zł":? "Piwo Okocim - 6800 zł":? "Piwo kuflowe - 4000 zł":RETURN
+2800 IF O2$="gówno" THEN ? "Musisz jeszcze podać jego numer!":RETURN
+2801 EXEC CHECK:EXEC CHECKCAR:PRZED$(ITEM,ITEM)=CHR$(LOC):GOTO 1020
+3000 TRAP 3010:IF O2$(1,4)="piwo"
+3002 FOR I=6 TO 9:IF PRZED$(I,I)<>CHR$(255) THEN NEXT I:? "Chyba śnisz.":RETURN
+3004 FOR I=6 TO 9:PRZED$(I,I)="ź":NEXT I:? "O.k.":GOTO 1020
+3006 ENDIF
+3010 TRAP 40000
+3012 IF O2$="wodę" OR O2$="*"
+3014 IF LOC=19 OR LOC=20 OR LOC=10 THEN ? "A fe ! Słona !":RETURN
+3016 IF LOC=14 OR LOC=13 THEN ? "O.k.":RETURN
+3018 ? "Tu nie ma żadnej wody!":RETURN
+3019 ENDIF
+3200 REM
+3205 IF O2$="gospodarza"
+3210 IF LOC<>23 THEN ? "Nie ma go tu.":RETURN
+3212 IF GOSP=1 THEN ? "Drugi raz ??":RETURN
+3214 GOSP=1:? "Gospodarz pada na mordę nieżywy.":RETURN
+3216 ENDIF
+3218 IF O2$="rybaka"
+3220 IF LOC<>5 OR (LOC=5 AND RYBAK=2) THEN ? "Ale go tu nie ma!":RETURN
+3222 ? "Nic z tego ! Dostajesz tylko w ryło.":RETURN
+3224 ENDIF
+3226 IF LOC=3
+3228 ? "Niestety ,po ciemku nie widzisz,kogo    atakujesz. Dostajesz w łeb i kończy Ci  się wizja i fonia."
+3230 GOTO 18000
+3235 ENDIF
+3240 IF O2$="żula" OR O2$="żuli"
+3242 IF LOC<>22 THEN ? "Nie tutaj.":RETURN
+3244 ? "Dostajesz w ryło tak potężnie,że lądu-  jesz pod drzwiami":RETURN
+3246 ENDIF
+3300 IF O2$<>"*" THEN ? "To niemożliwe.":RETURN
+3398 ? "Ale kogo ??":RETURN
+3400 IF LOC<>10 AND LOC<>19 AND LOC<>20 AND LOC<>13 AND LOC<>14 AND LOC<>8 THEN ? "Idiota!To się robi nad wodą!":RETURN
+3405 IF O2$<>"gówno" AND O2$<>"*" THEN ? "Nic z tego.":RETURN
+3412 IF PRZED$(12,12)<>CHR$(255) THEN ? "Ciekawe , czym !!":RETURN
+3420 IF LOC=13
+3421 IF ZATOCZKA=1 THEN ? "A po co ?":RETURN
+3425 IF ZATOCZKA=0
+3428 PRZED$(13,13)=CHR$(13):? "Wyciągnąłeś przepięgne gówno !":ZATOCZKA=1:RETURN
+3430 ENDIF
+3431 ENDIF
+3434 ENDIF
+3435 ? "Kiepsko dziś biorą...":RETURN
+3600 IF O2$="*" THEN ? "Ale co ??":RETURN
+3605 RESTORE 3680
+3608 READ T$,NUM:IF T$="*" THEN ? "Nic tu się nie da otworzyć.":RETURN
+3610 IF T$<>O2$ THEN GOTO 3608
+3615 GOTO NUM
+3620 IF PRZED$(2,2)<>CHR$(255) THEN ? "Nie masz klucza !":RETURN
+3624 IF LOC<>4 OR SZKAT=0 THEN ? "Nic tu takiego nie ma.":RETURN
+3625 IF SZKAT=2 THEN ? "Ale ona jest już otwarta!":RETURN
+3626 IF SZKAT=3 THEN ? "A w środku nic nie ma ...":SZKAT=2:RETURN
+3630 SZKAT=2:? "Wieko odpadło z trzaskiem ... W środku  leży ... Gówno 1 !!!":PRZED$(4,4)=CHR$(4)
+3635 RETURN
+3680 DATA szkatułę,3620
+3699 DATA *,0
+3800 IF O2$="*" THEN ? "Ale co ??":RETURN
+3802 RESTORE 3880
+3805 READ T$,NUM:IF T$="*" THEN ? "Nie widzę tu nic do zamknięcia.":RETURN
+3810 IF T$<>O2$ THEN GOTO 3608
+3815 GOTO NUM
+3820 IF LOC<>4 OR SZKAT=0 THEN ? "Nic tu takiego nie ma.":RETURN
+3825 IF SZKAT=1 OR SZKAT=3 THEN ? "Ale ona jest zamknięta!":RETURN
+3830 ? "O.K.":SZKAT=3:IF PRZED$(4,4)=CHR$(4) THEN SZKAT=1:PRZED$(4,4)=CHR$(0)
+3832 RETURN
+3880 DATA szkatułę,3820
+3899 DATA *,0
+4000 REM
+4002 IF LOC<>5 THEN 4028
+4004 IF RYBAK<>0 THEN 4014
+4006 TRAP 4007:IF O2$(1,4)<>"piwo" THEN TRAP 40000:? "Chcesz w ryj ? Daj to , o co prosi!":RETURN
+4008 ? "Rybak bierze całe twoje piwo.":PRZED$(7,7)=CHR$(0):PRZED$(8,8)=CHR$(0):RYBAK=1
+4010 ? "W zamian daje Ci żyłkę.":PRZED$(10,10)=CHR$(LOC):RETURN
+4014 IF RYBAK<>1 THEN 4028
+4015 IF O2$<>"wędzisko" THEN ? "A po co mu to ?":RETURN
+4016 IF PRZED$(12,12)<>CHR$(255) THEN ? "Chcesz go oszukać ?":RETURN
+4018 PRZED$(12,12)=CHR$(0):RYBAK=2:PRZED$(14,14)=CHR$(255)
+4020 ? "Rybak daje ci ogromną siekierę.":RETURN
+4025 ENDIF
+4028 IF LOC<>9 THEN 4040
+4029 IF O2$<>"gówna" THEN 4198
+4030 IF PRZED$(21,21)<>CHR$(255) THEN ? "Za kantowanie - ścięcie łba!":GOTO 18000
+4031 GOTO 19000
+4040 REM
+4198 ? "To ci się chyba nie uda":RETURN
+4200 IF SRAM=1 THEN ? "Ale nie chce ci się!":RETURN
+4210 IF LOC=17 THEN ? "Gówno wpada z mokrym plaskiem do szamba.":RETURN
+4215 PRZED$(17,17)=CHR$(LOC):? "Zrobiłeś przepiękne gówno!":SRAM=1:RETURN
+4400 IF PRZED$(16,16)<>CHR$(255) THEN ? "Czym ? Ręką ?!!":RETURN
+4405 IF SRAM<>1 THEN ? "I po co ?":RETURN
+4410 ? "SZURU - BURU !":PRZED$(16,16)=CHR$(0):PRZED$(18,18)=CHR$(255):SRAM=2:RETURN
+4600 SIAD=1:? "Ale dobrze...":RETURN
+4800 SIAD=0:? "Ok.":RETURN
+5000 IF O2$="*" THEN ? "Ale co ??":RETURN
+5005 IF LOC<>22 THEN ? "Przecież handel obwoźny jest zabroniony.":RETURN
+5010 RESTORE 5050
+5015 READ T$,NUM,OFF:IF T$="*" THEN ? "Niestety ; tego nie prowadzimy.":RETURN
+5020 IF T$<>O2$ THEN 5015
+5025 IF MONEY-NUM<0 THEN ? "Nie stać cię!":RETURN
+5030 MONEY=MONEY-NUM:? "Masz jeszcze ";MONEY;" zł.":PRZED$(6+OFF,6+OFF)=CHR$(255):GOTO 1020
+5050 DATA hamburgera,10000,0
+5051 DATA piwo Leżajsk,7500,1
+5052 DATA piwo Okocim,6800,2
+5053 DATA piwo kuflowe,4000,3
+5099 DATA *,0,0
+5200 IF O2$="*" THEN ? "Ale co ??":RETURN
+5201 IF PRZED$(14,14)<>CHR$(255) THEN ? "Ciekawe czym ?":RETURN
+5202 IF O2$="drzewo"
+5204 IF LOC=1
+5208 DRZEWO=1:? "Drzewo wali się z ogromnym hukiem , a   gówno z czubka spada u twych stóp."
+5210 PRZED$(15,15)=CHR$(1):P$(121,121)="ź":RETURN
+5215 ENDIF
+5217 IF LOC=12
+5218 ? "Możesz sobie tak rąbać.Tu jest sporo    drzew.":ENDPROC
+5219 ENDIF
+5220 ? "Coś ci odbiło ?":ENDIF
+5230 ? "Akurat !":RETURN
+5400 ? "Zrąbane":RETURN
+5412 DATA *,0
+5600 IF O2$<>"wędkę" THEN ? "Sraty-taty.":RETURN
+5605 IF PRZED$(5,5)<>CHR$(255) OR PRZED$(10,10)<>CHR$(255) OR PRZED$(11,11)<>CHR$(255) THEN ? "Nie masz czym.":RETURN
+5610 PRZED$(5,5)=CHR$(0):PRZED$(10,10)=CHR$(0):PRZED$(11,11)=CHR$(0):? "Masz teraz ogromne wędzisko!"
+5611 PRZED$(12,12)=CHR$(255):RETURN
+5800 IF O2$<>"prąd" AND O2$<>"wyłącznik" AND O2$<>"*" THEN ? "Nie uda ci się to.":RETURN
+5805 IF LOC<>23 THEN ? "Nie ma tu nigdzie wyłącznika":RETURN
+5808 IF PRAD=1 THEN ? "Ale już to zrobiłeś!!":RETURN
+5810 PRAD=1:? "O.K.":RETURN
+6000 IF O2$="*" THEN ? "Ale kogo ??":RETURN
+6002 IF O2$="żula"
+6004 IF LOC<>22 THEN ? "Tu nie ma takiego":RETURN
+6006 ? "Nic z tego,dostałeś w ryło.":RETURN
+6008 ENDIF
+6010 IF O2$="rybaka"
+6012 IF LOC<>5 OR (LOC=5 AND RYBAK=2) THEN ? "Tu nie ma takiego":RETURN
+6014 ? "On nie jest głodny.":RETURN
+6018 ENDIF
+6020 IF O2$="Eepcha" OR O2$="eepcha"
+6022 IF LOC<>24 THEN ? "A gdzie go widzisz ?":RETURN
+6024 IF PRZED$(19,19)<>CHR$(255) THEN ? "Ale nie masz dla niego żarcia!":RETURN
+6026 PRZED$(19,19)=CHR$(0):PRZED$(20,20)=CHR$(LOC):? "Eepch się nażarł - i z wdzięczności     nasrał ci pod nogi !"
+6028 RETURN
+6030 ENDIF
+6040 ? "Ciekawe ,jak chcesz to zrobić!":RETURN
+6200 I=3:EXEC CH:IF J=1 THEN ? "Ale czym ??":RETURN
+6205 IF LOC<>4 THEN ? "Wykopałeś przepiękny dołek.":RETURN
+6210 IF SZKAT=1 THEN ? "Masz zadatki na kopacza rowów.":RETURN
+6215 SZKAT=1:? "Wykopałeś (oprócz kości) starą szkatułę.":RETURN
+6400 EXEC CHECK:EXEC CHECKCAR
+6402 RESTORE 6410+ITEM:READ T$,NUM:IF T$="*" THEN ? "Niedobre.":RETURN
+6405 ? T$:GOTO NUM
+6408 RETURN
+6411 DATA Gut celuloza!,6500
+6413 DATA Lekko niestrawna,6408
+6414 DATA Szkoda by go było!,6408
+6415 DATA Za długa.,6408
+6416 DATA Pycha !,6500
+6417 DATA Tego się nie je! To się pije!,6408
+6418 DATA Tego się nie je! To się pije!,6408
+6419 DATA Tego się nie je! To się pije!,6408
+6420 DATA Niezdrowa,6408
+6421 DATA Przecież go potem nie wysrasz!,6408
+6422 DATA Beznadziejny pomysł.,6408
+6423 DATA Szkoda by go było!,6408
+6424 DATA Za ostra jak dla ciebie,6408
+6425 DATA Szkoda by było.,6408
+6426 DATA Gut celuloza !,6500
+6427 DATA Szkoda by go było!,6408
+6428 DATA Taką obsraną ?,6408
+6429 DATA Nie dla ciebie!,6408
+6430 DATA Szkoda by go było!,6408
+6431 DATA Wszystkie na raz ?,6408
+6432 DATA Ciut niestrawna!,6408
+6500 PRZED$(ITEM,ITEM)=CHR$(0):RETURN
+10000 PROC CLESCR:? "}":FOR I=1 TO 10:?:NEXT I:ENDPROC
+10010 PROC GETPIC:IF TEKST<>0
+10011 POKE 54286,64:POKE 559,0
+10012 TRAP 10030:RESTORE 25000+LOC:READ T$:OPEN #1,4,0,T$:BGET #1,162*256,81*40
+10014 FOR I=0 TO 2:GET #1,A:POKE 708+I,A:NEXT I:GET #1,A:POKE 712,A
+10020 ENDIF:CLOSE:POKE 54286,192:POKE 559,34:ENDPROC
+10030 CLOSE:GOSUB 1600:? "\x1CB\x0C\x01d czytania dysku - obrazki wy\x0C\x01czone.":POKE 559,34:ENDPROC
+10040 PROC CHECK:J=0:IF O2$="*" THEN ? "Ale co ??":J=1:GOTO 10055
+10045 EXEC ITEMG:IF ITEM=0 THEN J=1:? "Nie znam takiego przedmiotu."
+10050 IF J=0 THEN ENDPROC
+10055 POP:RETURN
+10060 PROC CH:J=0:IF PRZED$(I,I)<>CHR$(255) THEN J=1
+10065 ENDPROC
+10070 PROC CHECKCAR:IF PRZED$(ITEM,ITEM)<>CHR$(255) THEN ? "Nie niesiesz tego przedmiotu!":POP:RETURN
+10080 ENDPROC
+10182 DATA Na północ prowadzi ścieżka do gospodar- stwa.
+11000 PROC GETDISK
+11001 IF ACD=2 THEN GOTO 11020
+11002 ? "Włóż stronę B dyskietki i wciśnij RETURN":GET A
+11005 TRAP 11010:OPEN #1,4,0,"D:B":CLOSE #1:ACD=2:ENDPROC
+11010 ? "\x1C\x1C";:CLOSE #1:GOTO 11001
+11020 REM
+11022 ? "Włóż stronę A dyskietki i wciśnij RETURN":GET A
+11025 TRAP 11030:OPEN #1,4,0,"D:A":CLOSE #1:ACD=1:ENDPROC
+11030 ? "\x1C\x1C";:CLOSE #1:GOTO 11022
+14000 PROC SPECIAL
+14005 EXEC SP1
+14010 IF SRAM=1 THEN ? "Swędzi cię dupa."
+14999 ENDPROC
+15000 PROC SP1
+15001 IF LOC=4 AND SZKAT<>0
+15003 ? "W wykopanym dołku leży ";:IF SZKAT=2 THEN ? "otwarta ";
+15005 ? "szkatuła."
+15009 ENDIF
+15010 IF LOC=5 AND RYBAK<>2
+15011 ? "Jest tu stary ; zalany rybak."
+15013 IF RYBAK=0 THEN ? "Mówi ; że chciałby się czegoś napić."
+15015 IF RYBAK=1 THEN ? "Mówi ; że poszedłby na rybki."
+15019 ENDIF
+15020 IF LOC=13
+15021 IF ZATOCZKA=0 THEN ? "W zatoczce po drugiej stronie rzeczki   pływa sobie gówno."
+15023 ENDIF
+15025 IF LOC=1
+15028 IF DRZEWO=1 THEN ? "Drzewo jest ścięte."
+15030 ENDIF
+15035 IF LOC=23
+15038 IF GOSP=1 THEN ? "Gospodarz nie żyje."
+15040 ENDIF
+15500 RESTORE 15520:FOR I=1 TO 5:READ A:IF PRZED$(A,A)=CHR$(255) THEN NEXT I:GOTO 15510
+15505 GOTO 15560
+15510 RESTORE 15520:FOR I=1 TO 5:READ A:PRZED$(A,A)=CHR$(0):NEXT I:PRZED$(21,21)=CHR$(255)
+15515 ? "Ha!":GOSUB 1020
+15520 DATA 4,13,15,17,20
+15560 REM
+15999 ENDPROC
+18000 ? "Gra jest skonczona...Chyba nie żyjesz!"
+18010 GOTO 19020
+19000 ? "Wygrałeś!!!!!!!!!!!":? "Ha!Ha!"
+19020 ? "Grasz jeszcze raz (T/N)?":GET A:IF A=78 THEN A=USR(DEC("E477"))
+19025 ACD=2:EXEC GETDISK:RUN
+20000 DATA Dawno temu zył sobie w swoim zamku nie- jaki książe Bolo. Spokojny był to wład-
+20001 DATA ca ; poddanych trzymał krótko za mordy  a i żonie jego nie było lepiej.
+20002 DATA Pewnego razu do Księcia przybyła wiedź- ma. "Spełnie twoje każde życzenie jeśli
+20003 DATA tylko dostarczysz mi pięć gówien        eepcha!" - powiedziała i zniknęła.
+20004 DATA Zafrasował sie księże Bolo. Eepcha      widział ostatnio w wieku 5 lat (teraz
+20005 DATA miał 60) w zoo. Ale - od czego byli     jego poddani ??
+20006 DATA I tu zaczyna Twoja misja ...            W razie kłopotow użyj komendy "pomocy"
+20007 DATA lub "słówka". Pisz je koniecznie małymi literami ; zwracając uwagę na polskie
+20008 DATA litery (np. cntl+a=ą). Powodzenia!!
+20009 DATA *
+20010 DATA Stoisz pod olbrzymim drzewem. Słyszysz  pięknie spiewające ptaszki i szum
+20011 DATA strumyka. Dookoła ciebie jest olbrzymia;bezkresna łąka . Stoisz na ścieżce pro-
+20012 DATA wadzącej z północy na południe.
+20013 DATA *
+20020 DATA Stoisz przed ogromną skałą. Daleko na   południu widzisz drzewo ; do którego
+20021 DATA prowadzi ścieżka. W drugą strone ścież- ka idzie na zachód. Na północy widzisz
+20022 DATA wejście do ciemnej jaskini. Dobiegają   z niej dziwne dźwieki.
+20023 DATA *
+20030 DATA Jesteś w ciemnej jaskini. W zasadzie nicnie widzisz ; ale ktoś tu chyba z tobą  jest ...
+20031 DATA *
+20040 DATA Stoisz pod ogromną skałą. Na zachodzie  widzisz ciemną jaskinię ; prowadzi do
+20041 DATA niej ścieżka. W drugą stronę możesz     dojść do skrzyżowania.
+20042 DATA Do skały przymocowana jest tabliczka.
+20043 DATA *
+20050 DATA Stoisz na skrzyżowaniu dróg. Na południuścieżka pnie się na ogromną skałę ;
+20051 DATA na północy - schodzi w kierunku morza   (słyszysz jego szum). Daleko na zacho-
+20052 DATA dzie widać zamek księcia Bolka ; na     wschodzie jest coś ; co stąd wygląda
+20053 DATA jak jaskinia.
+20054 DATA *
+20060 DATA Siedzisz na grubym konarze stuletniego  dębu. Gęste liście zasłaniają ci drogę
+20061 DATA ale masz stąd doskonały widok na okoli- cę. Na północy widzisz samotną skałę.
+20062 DATA *
+20070 DATA Stoisz na ścieżce prowadzącej ze wscho- du na zachód. Na północy ; widzisz zam-
+20071 DATA mek księcia Bolka ; otoczony fosą (wyg- ląda na dosyć głęboką). Prowadzi do
+20072 DATA niego droga przez most. Daleko na       wschodzie widzisz samotną skałę ;
+20073 DATA na zachodzie ciągnie się gęsty las.
+20074 DATA *
+20080 DATA Stoisz na moście .Prowadzi przez niego  droga do zamku księcia Bolka. Dokładnie
+20081 DATA pod sobą widzisz głęboką fosę.
+20082 DATA *
+20090 DATA Stoisz pod bramą zamku księcia Bolka.   Wygląda na to ; że nie ma tu żywej du-
+20091 DATA szy. Na wschodzie widzisz samotną skałę;a na południu - drogę wschód-zachód.
+20092 DATA Na murze zamku przybita jest tabliczka.
+20093 DATA *
+20100 DATA Wyszedłeś nad morze. Stopy grzęzną ci   w piasku ; a szum morza i pisk mew
+20101 DATA działa kojąco na twoje nerwy.
+20102 DATA *
+20110 DATA Stoisz na samym czubku skały. Daleko na zachodzie widzisz ponure mury zamku
+20111 DATA księcia Bolka ; na północy jest chyba   morze ; widzisz mewy nad wzgórzami.
+20112 DATA *
+20120 DATA Jesteś w gęstym i ciemnym lesie. Panuje tu prawie noc ; gałęzie drzew zasłania-
+20121 DATA ją dostęp światła. Słyszysz tajemnicze  pojękiwania i ryki. Cały czas dookoła
+20122 DATA coś się rusza.
+20123 DATA *
+20130 DATA Stoisz nad rzeczką na skraju lasu. Dróżka rozdziela się tu na dwie .
+20131 DATA Na północy ciągnie się wzdłuż rzeczki ; na południu - dochodzi do mostku.
+20132 DATA *
+20140 DATA Stoisz na mostku nad rzeczką. Mostek    jest nieco zdezelowany i lepiej nie
+20141 DATA opierać się o poręcze. Na zachodzie jestgęsty las ; na wschodzie zaś - widać
+20142 DATA jakieś gospodarstwo.
+20143 DATA *
+20150 DATA Stoisz na cudzym podwórku. Na północy   widzisz sławojkę ; na południu zaś
+20151 DATA stoi obora. Ktoś tu jest.
+20152 DATA *
+20160 DATA Idziesz sobie drogą. Na północy widać   olbrzymi ; stary dąb. Na zachodzie stoi
+20161 DATA jakiś budynek ; z południa dobiega do   ciebie szum morza.
+20162 DATA *
+20170 DATA Jesteś w sławojce. Z dziury wydobywa    sią smród i straszliwa ilość Much.
+20171 DATA Możesz sobie usiąść wygodnie i bezpiecz-nie.,*
+20180 DATA Stoisz pod jakimś murem. Na północ pro- wadzi ścieżka do gospodarstwa.
+20181 DATA W murze jest furtka ; zamknięta na zamkitypu "Skarbiec" ; "Tytan" i "Yale".
+20182 DATA Do muru przymocowana jest tabliczka.,*
+20190 DATA Jesteś nad brzegiem morza. Picachu jest tu sporo ; wody jeszcze więcej. Plaża
+20191 DATA ciągnie się na zachód . Na wschodzie    brzeg staje się nieco skalisty.
+20192 DATA *
+20200 DATA Stoisz nad brzegiem uroczej zatoczki    morskiej. Stopy omywa ci ciepłe morze;
+20201 DATA twarz chłosta wietrzyk. Daleko na zacho-dzie widać ujście małej rzeczki.,*
+20202 DATA *
+20210 DATA Stoisz na drodze wschód-zachód. Przed   tobą jest bar "Rybacki". Jest otwarty ;
+20211 DATA a z wnętrza dobywa się hałas pijackich  głosów.
+20212 DATA *
+20220 DATA Stoisz przed ladą w barze "Rybackim".   Na ścianie wisi cennik. Dookoła jest
+20221 DATA pełno zalanych miejscowych żuli.,*
+20222 DATA że nie ma tu gospodarzy.,*
+20230 DATA Jesteś w dużym pokoju. Na podłodze leży piękny ; zdobiony dywan. Pod ścianą
+20231 DATA stoi regał ; stół i szafa. Telewizor na regale jest wyłączony. Na ścianie wi-
+20232 DATA dzisz wyłącznik podpisany "Ogrodzenie". W pokoju jest gospodarz.,*
+20240 DATA Stoisz przed dużą klatką. W środku jest jeden Eepch. Na północ prowadzi ścieżka
+20241 DATA do furtki w murze (który otacza całą    klatkę). Na zachodzie widać małą
+20242 DATA komórkę.,*
+20250 DATA Jesteś w komórce z żarciem dla Eepcha.  Jest tu cała masa słoików z Eepch's
+20251 DATA Food - czymś ; czego się już od lat nie produkowało.,*
+25001 DATA D:SCIEZKA
+25002 DATA D:JASKINIA
+25003 DATA D:WJASKINI
+25004 DATA D:PODSKALA
+25005 DATA D:SKRZYZ
+25006 DATA D:NADRZEWI.E
+25007 DATA D:PRZEDZ
+25008 DATA D:MOST
+25009 DATA D:NAZAMKU
+25010 DATA D:MORZE
+25011 DATA D:NASKALE
+25012 DATA D:LAS
+25013 DATA D:RZECZKA
+25014 DATA D:MOSTEK
+25015 DATA D:PODWORKO
+25016 DATA D:DROGA2
+25017 DATA D:KIBEL
+25018 DATA D:MUR
+25019 DATA D:MORZE3
+25020 DATA D:MORZE2
+25021 DATA D:PRZEDBAR
+25022 DATA D:WBARZE
+25023 DATA D:POKOJ
+25024 DATA D:KLATKA
+25025 DATA D:ZARCIE
+26001 DATA *
+26002 DATA *
+26003 DATA Nic tu po tobie.
+26004 DATA Tu jest tak ciemno ; że i ja nic nie    widzę
+26005 DATA Spróbuj pohandlować.
+26007 DATA *
+26008 DATA Lepiej nie kąpać się w fosie.
+26009 DATA Tu trzeba oddać wszystkie gówna.
+26010 DATA Woda jest słona.
+26011 DATA Uważaj ; żebyś nie spadł na mordę.
+26012 DATA Spływaj stąd lepiej...
+26013 DATA Wędka może służyć do różnych celów...
+26014 DATA *
+26015 DATA Od domu do muru prowadzą druty.
+26016 DATA *
+26017 DATA Lepiej tu nie srać...
+26018 DATA Drzwi mogą cię zabić!
+26019 DATA Piękną pogodę mamy dzisiaj!
+26020 DATA *
+26021 DATA Uważaj na żuli!
+26022 DATA Rybak chce pić !
+26023 DATA Gospodarz nie pozwoli ci wyłączyć prądu.
+26024 DATA Eepch jest wygłodzony.
+26025 DATA *
+27000 DATA drzewo,100-letni dąb.Możesz się na niego       wspiąć.,1
+27001 DATA łąkę,Zielona.,1
+27002 DATA skałę,Chyba wapienna ; zbyt stroma by się na  nią wspinać z tej strony.,2
+27003 DATA wejście,Nic nie widać.,2
+27004 DATA jaskinię,Stąd ??,2
+27005 DATA dźwięki,Przypominają rżenie konia.,2
+27006 DATA drogę,Taka sobie; rozjeżdżona przez traktory.,16
+27007 DATA skałę,Bardzo stroma.,4
+27008 DATA skrzyżowanie,Jest tu drogowskaz.,5
+27009 DATA drogowskaz,"Do zamku Ks. Bolka",5
+27010 DATA morze,Raczej słone i głębokie.,10
+27011 DATA piasek,Jest żółty i sypki.,10
+27012 DATA czubek,Srak tu naptał.,11
+27013 DATA most,Częściowo zwodzony.Od dawna nikt go nie naprawiał.,8
+27014 DATA fosę,Jest w niej wskaźnik - pokazuje 8.5 m.  głębokości.,8
+27015 DATA bramę,Ciężka ; z żelaznymi okuciami. Na każ-  dym skrzydle jest kołatka ; a na górze  widać herb Ks. Bolka,9
+27016 DATA rzeczkę,10 m. szerokości ; płynie dość leniwie.,13
+27017 DATA dróżkę,Zwykła ; polna dróżka,13
+27018 DATA mostek,Uważaj ; bo się może pod tobą rozpaść !,14
+27019 DATA poręcze,Jak widzisz - prawie ich nie ma.,14
+27020 DATA podwórko,Typowe wiejskie podwórko ; dosyć zad-   bane.,15
+27021 DATA sławojkę,Typowa wiejska sławojka z otworkiem.,15
+27022 DATA oborę,Połączona z domem,15
+27023 DATA dom,Drewniany.,15
+27024 DATA sławojkę,Dosyć wygodna ; aczkolwiek wygląda na   lekko przepełnioną. Cuchnie nieludzko.,17
+27025 DATA dziurę,Na krawędzi są jakieś białe ślady.,17
+27026 DATA muchy,Ten gatunek lubił Eepchy!!,17
+27027 DATA mur,Betonowy.Na wierzchu jest drut kolczas- ty.,18
+27028 DATA furtkę,żelazna - na oko 40 mm grubości.,18
+27029 DATA zamki,Jesteś zbyt kiepskim włamywaczem by je  otworzyć.,18
+27030 DATA klamkę,Dosyć dziwnej konstrukcji.,18
+27031 DATA druty,Kolczasty - i chyba pod napięciem.,18
+27032 DATA pokój,40 m powierzchni,23
+27033 DATA dywan,Perski.,23
+27034 DATA regał,Jest na nim telewizor i masa książek.,23
+27035 DATA stół,Zwyczajny.Stoi przy nim fotel.,23
+27036 DATA szafa,Zamknięta na klucz.,23
+27037 DATA bar,Typowy bar III kategorii (masa piwa i   żuli).,21
+27038 DATA ladę,Nieco zalana piwem.,22
+27039 DATA cennik,Jest tu coś napisane.,22
+27040 DATA żuli,Lepiej im się nie przyglądaj za mocno.,22
+27041 DATA żula,Którego ?,22
+27042 DATA klatkę,Mocna ; żelazna.,24
+27043 DATA Eepcha,Bardzo wygłodzony.,24
+27044 DATA eepcha,Bardzo wygłodzony.,24
+27045 DATA komórkę,Drewniana.,24
+27046 DATA słoik,Ale który ??,25
+27047 DATA słoiki,W środku jest żarcie dla Eepcha !,25
+27048 DATA wyłącznik,Do furtki.,23
+27500 DATA *,*,0
+27501 DATA Jest coś na nim napisane
+27502 DATA Bardzo stary ; dziś już nikt takich nie używa.
+27503 DATA Nowiutka. Doskonała do kopania grobów.
+27504 DATA Nieco stare ; ale niewątpliwie zrobione przez Eepcha.
+27505 DATA Zwykła wędka bambusowa.
+27506 DATA Zwykły hamburger ; nawet bez sałaty.
+27507 DATA Puszkowane.
+27508 DATA Eksportowe.
+27509 DATA Sikacz ; dosyć mocno chrzczony.
+27510 DATA Długa na 150 m.
+27511 DATA Doskonały na rybki.
+27512 DATA Dla profesjonalnego rybaka!
+27513 DATA Niewątpliwie Eepcha.
+27514 DATA Długa (1 m.) i ciężka (5 kg.).
+27515 DATA Wygląda na gówienko Eepcha (dość małe).
+27516 DATA Uniwersalna bumaga (chroni ; ratuje ;   pomaga).
+27517 DATA Piękne brązowe gówienko!
+27518 DATA Sam ją uświniłeś.
+27519 DATA Eepch's Food- to było żarcie eksportowe!
+27520 DATA Ogromne ; świeże ; cuchnące gówno!
+27521 DATA Piękne okazy! W sam raz dla księcia!
+27522 DATA "Hodowla i zastosowanie Eepchów"
+32000 PROC DL
+32010 GRAPHICS 0:POKE 559,0:DL=DPEEK(560):EK=DPEEK(DL+4)+(40*11):POKE 82,0:POKE 83,39:POKE 756,184
+32015 DATA 112,112,112,78,0,162
+32020 RESTORE 32015:FOR I=1536 TO 1541:READ A:POKE I,A:NEXT I:FOR I=1542 TO 1627:POKE I,14:NEXT I:POKE 1628,142
+32025 POKE 1629,66:DPOKE 1630,EK:POKE 1632,%1:DPOKE 1633,DL+17
+32030 DPOKE DL+32,1536:DPOKE 560,1536
+32035 FOR I=1700 TO 1715:READ A:POKE I,A:NEXT I:DPOKE 512,1700:POKE 54286,192
+32036 DATA 72,169,20,141,10,212,141,24,208,169,204,141,23,208,104,64
+32040 ENDPROC
+32050 DATA \x02\x03\x00\x00\x0B\x00\x08\x09\x00\x05\x00\x00\x00\x0D\x11\x01\x00\x0F\x10\x00\x16\x00\x00\x12\x00\x00\x00\x00\x00\x00:REM N
+32051 DATA \x10\x01\x02\x00\x0A\x00\x00\x07\x08\x00\x05\x00\x0E\x00\x12\x13\x0F\x98\x00\x00\x00\x95\x00\x00\x00\x00\x00\x00\x00\x00:REM S    1234567890123456789012345
+32052 DATA \x00\x00\x00\x02\x04\x00\x05\x00\x00\x14\x00\x07\x0C\x00\x0E\x15\x00\x00\x00\x13\x00\x00\x0F\x00\x18\x00\x00\x00\x00\x00:REM E
+32053 DATA \x00\x04\x00\x05\x07\x00\x0C\x00\x00\x00\x00\x0D\x00\x0F\x17\x00\x00\x00\x14\x0A\x10\x00\x00\x19\x00\x00\x00\x00\x00\x00:rEM W
+32054 DATA \x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00:REM U
+32055 DATA źźźźźąźźźźźźźźźźźźźźźźźźźźźźźź:REM D
+32060 DATA \x01\x16\x0F\x00\x14\x00\x00\x00\x00\x00\x0D\x00\x00\x00\x00\x11\x00\x00\x19\x00\x00\x17\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
+32170 DATA Idziesz sobie drogą ...
