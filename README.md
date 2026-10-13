@@ -1,3 +1,5 @@
+*Dedicated to my children, today's and future; let The Sun always shine in your eyes.*
+
 # Pięć gówien Eepcha – Turbo BASIC loader + interpreter for Godot 4.8 / C#
 
 Runs the 1991 Macio Systems Atari 8-bit text adventure straight from the original `.atr`
