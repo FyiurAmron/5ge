@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pięć gówien Eepcha</title>
+<style>
+:root{--bg:#f6f3ea;--fg:#241f17;--dim:#7a705d;--accent:#8a3b12;--panel:#ebe5d4;--line:#cfc5ab;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17150f;--fg:#e8e0cc;--dim:#9a9078;--accent:#e0a35a;--panel:#221f16;--line:#3a3526;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17150f;--fg:#e8e0cc;--dim:#9a9078;--accent:#e0a35a;--panel:#221f16;--line:#3a3526;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 Georgia,"Times New Roman",serif;display:flex;flex-direction:column;max-width:46rem;margin:0 auto}
+#log p.banner-title{margin:.2rem 0 0;text-align:center;font-size:1.5rem;letter-spacing:.02em;color:var(--accent)}
+#log p.banner-note{margin:0 0 1.2rem;text-align:center;font-size:.85rem;color:var(--dim)}
+#log{flex:1;overflow-y:auto;padding:1rem 1rem .5rem}
+#log p{margin:0 0 .7rem;white-space:pre-wrap}
+#log p.echo{color:var(--dim);font-family:ui-monospace,Consolas,monospace;font-size:.9em;margin-top:1.1rem}
+#log p.list{color:var(--accent);font-size:.95em;margin-bottom:.2rem}
+#bar{display:flex;gap:.5rem;padding:.6rem 1rem;border-top:1px solid var(--line);background:var(--panel)}
+#cmd{flex:1;min-width:0;font:16px ui-monospace,Consolas,monospace;padding:.55rem .7rem;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+#go{font:inherit;font-size:15px;padding:.55rem 1rem;border:0;border-radius:6px;background:var(--accent);color:var(--bg);cursor:pointer}
+</style>
+</head>
+<body>
+<div id="log"></div>
+<div id="bar"><input id="cmd" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Co robisz?" aria-label="Polecenie"><button id="go" type="button">OK</button></div>
+<script>
+(function () {
+const D = {"text": [["Dawno temu zył sobie w swoim zamku niejaki książe Bolo. Spokojny był to władca, poddanych trzymał krótko za mordy a i żonie jego nie było lepiej. Pewnego razu do Księcia przybyła wiedźma. „Spełnie twoje każde życzenie jeśli tylko dostarczysz mi pięć gówien eepcha!” - powiedziała i zniknęła. Zafrasował sie księże Bolo. Eepcha widział ostatnio w wieku 5 lat (teraz miał 60) w zoo. Ale - od czego byli jego poddani??", "I tu zaczyna Twoja misja... W razie kłopotow użyj komendy „pomocy” lub „słówka”. Pisz je małymi literami (polskie znaki są opcjonalne). Powodzenia!!"], ["Stoisz pod olbrzymim drzewem. Słyszysz pięknie spiewające ptaszki i szum strumyka. Dookoła ciebie jest olbrzymia, bezkresna łąka. Stoisz na ścieżce prowadzącej z północy na południe."], ["Stoisz przed ogromną skałą. Daleko na południu widzisz drzewo, do którego prowadzi ścieżka. W drugą strone ścieżka idzie na zachód. Na północy widzisz wejście do ciemnej jaskini. Dobiegają z niej dziwne dźwieki."], ["Jesteś w ciemnej jaskini. W zasadzie nic nie widzisz, ale ktoś tu chyba z tobą jest..."], ["Stoisz pod ogromną skałą. Na zachodzie widzisz ciemną jaskinię, prowadzi do niej ścieżka. W drugą stronę możesz dojść do skrzyżowania. Do skały przymocowana jest tabliczka."], ["Stoisz na skrzyżowaniu dróg. Na południu ścieżka pnie się na ogromną skałę, na północy - schodzi w kierunku morza (słyszysz jego szum). Daleko na zachodzie widać zamek księcia Bolka, na wschodzie jest coś, co stąd wygląda jak jaskinia."], ["Siedzisz na grubym konarze stuletniego dębu. Gęste liście zasłaniają ci drogę ale masz stąd doskonały widok na okolicę. Na północy widzisz samotną skałę."], ["Stoisz na ścieżce prowadzącej ze wschodu na zachód. Na północy, widzisz zamek księcia Bolka, otoczony fosą (wygląda na dosyć głęboką). Prowadzi do niego droga przez most. Daleko na wschodzie widzisz samotną skałę, na zachodzie ciągnie się gęsty las."], ["Stoisz na moście. Prowadzi przez niego droga do zamku księcia Bolka. Dokładnie pod sobą widzisz głęboką fosę."], ["Stoisz pod bramą zamku księcia Bolka. Wygląda na to, że nie ma tu żywej duszy. Na wschodzie widzisz samotną skałę, a na południu - drogę wschód-zachód. Na murze zamku przybita jest tabliczka."], ["Wyszedłeś nad morze. Stopy grzęzną ci w piasku, a szum morza i pisk mew działa kojąco na twoje nerwy."], ["Stoisz na samym czubku skały. Daleko na zachodzie widzisz ponure mury zamku księcia Bolka, na północy jest chyba morze, widzisz mewy nad wzgórzami."], ["Jesteś w gęstym i ciemnym lesie. Panuje tu prawie noc, gałęzie drzew zasłaniają dostęp światła. Słyszysz tajemnicze pojękiwania i ryki. Cały czas dookoła coś się rusza."], ["Stoisz nad rzeczką na skraju lasu. Dróżka rozdziela się tu na dwie. Na północy ciągnie się wzdłuż rzeczki, na południu - dochodzi do mostku."], ["Stoisz na mostku nad rzeczką. Mostek jest nieco zdezelowany i lepiej nie opierać się o poręcze. Na zachodzie jest gęsty las, na wschodzie zaś - widać jakieś gospodarstwo."], ["Stoisz na cudzym podwórku. Na północy widzisz sławojkę, na południu zaś stoi obora. Ktoś tu jest."], ["Idziesz sobie drogą. Na północy widać olbrzymi, stary dąb. Na zachodzie stoi jakiś budynek, z południa dobiega do ciebie szum morza."], ["Jesteś w sławojce. Z dziury wydobywa sią smród i straszliwa ilość Much. Możesz sobie usiąść wygodnie i bezpiecznie."], ["Stoisz pod jakimś murem. Na północ prowadzi ścieżka do gospodarstwa. W murze jest furtka, zamknięta na zamki typu „Skarbiec”, „Tytan” i „Yale”. Do muru przymocowana jest tabliczka."], ["Jesteś nad brzegiem morza. Picachu jest tu sporo, wody jeszcze więcej. Plaża ciągnie się na zachód. Na wschodzie brzeg staje się nieco skalisty."], ["Stoisz nad brzegiem uroczej zatoczki morskiej. Stopy omywa ci ciepłe morze, twarz chłosta wietrzyk. Daleko na zachodzie widać ujście małej rzeczki."], ["Stoisz na drodze wschód-zachód. Przed tobą jest bar „Rybacki”. Jest otwarty, a z wnętrza dobywa się hałas pijackich głosów."], ["Stoisz przed ladą w barze „Rybackim”. Na ścianie wisi cennik. Dookoła jest pełno zalanych miejscowych żuli."], ["Jesteś w dużym pokoju. Na podłodze leży piękny, zdobiony dywan. Pod ścianą stoi regał, stół i szafa. Telewizor na regale jest wyłączony. Na ścianie widzisz wyłącznik podpisany „Ogrodzenie”. W pokoju jest gospodarz."], ["Stoisz przed dużą klatką. W środku jest jeden Eepch. Na północ prowadzi ścieżka do furtki w murze (który otacza całą klatkę). Na zachodzie widać małą komórkę."], ["Jesteś w komórce z żarciem dla Eepcha. Jest tu cała masa słoików z Eepch’s Food - czymś, czego się już od lat nie produkowało."]], "exits": [[0, 2, 3, 0, 0, 11, 0, 8, 9, 0, 5, 0, 0, 0, 13, 17, 1, 0, 15, 16, 0, 22, 0, 0, 18, 0, 0, 0, 0, 0, 0], [0, 16, 1, 2, 0, 10, 0, 0, 7, 8, 0, 5, 0, 14, 0, 18, 19, 15, 152, 0, 0, 0, 149, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 2, 4, 0, 5, 0, 0, 20, 0, 7, 12, 0, 14, 21, 0, 0, 0, 19, 0, 0, 15, 0, 24, 0, 0, 0, 0, 0], [0, 0, 4, 0, 5, 7, 0, 12, 0, 0, 0, 0, 13, 0, 15, 23, 0, 0, 0, 20, 10, 16, 0, 0, 25, 0, 0, 0, 0, 0, 0], [0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], "obj": [0, 1, 22, 15, 0, 20, 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 17, 0, 0, 25, 0, 0, 23], "dirs": ["północ", "południe", "wschód", "zachód", "góra", "dół"], "names": ["", "papier", "kluczyk", "łopatę", "gówno 1", "wędkę", "hamburgera", "piwo Leżajsk", "piwo Okocim", "piwo kuflowe", "żyłkę", "haczyk", "wędzisko", "gówno 2", "siekierę", "gówno 3", "srajtaśmę", "gówno 4", "brudną srajtaśmę", "żarcie", "gówno 5", "gówna", "książkę"], "desc": [null, "Jest coś na nim napisane", "Bardzo stary, dziś już nikt takich nie używa.", "Nowiutka. Doskonała do kopania grobów.", "Nieco stare, ale niewątpliwie zrobione przez Eepcha.", "Zwykła wędka bambusowa.", "Zwykły hamburger, nawet bez sałaty.", "Puszkowane.", "Eksportowe.", "Sikacz, dosyć mocno chrzczony.", "Długa na 150 m.", "Doskonały na rybki.", "Dla profesjonalnego rybaka!", "Niewątpliwie Eepcha.", "Długa (1 m.) i ciężka (5 kg.).", "Wygląda na gówienko Eepcha (dość małe).", "Uniwersalna bumaga (chroni, ratuje, pomaga).", "Piękne brązowe gówienko!", "Sam ją uświniłeś.", "Eepch’s Food- to było żarcie eksportowe!", "Ogromne, świeże, cuchnące gówno!", "Piękne okazy! W sam raz dla księcia!", "„Hodowla i zastosowanie Eepchów”"], "read": [null, "„Za znalezienie pięciu gówien eepcha - nagroda $500.000.000”\nPodpisano: Książe Bolo", null, null, null, null, null, null, null, null, null, null, null, null, null, null, "Made by Celwiskoza Yelenia Goora.", null, null, "Produced by Eedeeotha Corp.", null, null, "„... gówno ludzkie ma identyczne właściwości jak gówno Eepcha...”"], "eat": [null, ["Gut celuloza!", true], ["Lekko niestrawna", false], ["Lekko niestrawna", false], ["Szkoda by go było!", false], ["Za długa.", false], ["Pycha!", true], ["Tego się nie je! To się pije!", false], ["Tego się nie je! To się pije!", false], ["Tego się nie je! To się pije!", false], ["Niezdrowa", false], ["Przecież go potem nie wysrasz!", false], ["Beznadziejny pomysł.", false], ["Szkoda by go było!", false], ["Za ostra jak dla ciebie", false], ["Szkoda by było.", false], ["Gut celuloza!", true], ["Szkoda by go było!", false], ["Taką obsraną?", false], ["Nie dla ciebie!", false], ["Szkoda by go było!", false], ["Wszystkie na raz?", false], ["Ciut niestrawna!", false]], "help": [null, null, null, "Nic tu po tobie.", "Tu jest tak ciemno, że i ja nic nie widzę", "Spróbuj pohandlować.", null, null, "Lepiej nie kąpać się w fosie.", "Tu trzeba oddać wszystkie gówna.", "Woda jest słona.", "Uważaj, żebyś nie spadł na mordę.", "Spływaj stąd lepiej...", "Wędka może służyć do różnych celów...", null, "Od domu do muru prowadzą druty.", null, "Lepiej tu nie srać...", "Drzwi mogą cię zabić!", "Piękną pogodę mamy dzisiaj!", null, "Uważaj na żuli!", "Rybak chce pić!", "Gospodarz nie pozwoli ci wyłączyć prądu.", "Eepch jest wygłodzony.", null], "scenery": [["drzewo", "100-letni dąb. Możesz się na niego wspiąć.", 1], ["łąkę", "Zielona.", 1], ["skałę", "Chyba wapienna, zbyt stroma by się na nią wspinać z tej strony.", 2], ["wejście", "Nic nie widać.", 2], ["jaskinię", "Stąd??", 2], ["dźwięki", "Przypominają rżenie konia.", 2], ["drogę", "Taka sobie, rozjeżdżona przez traktory.", 16], ["skałę", "Bardzo stroma.", 4], ["skrzyżowanie", "Jest tu drogowskaz.", 5], ["drogowskaz", "„Do zamku Ks. Bolka”", 5], ["morze", "Raczej słone i głębokie.", 10], ["piasek", "Jest żółty i sypki.", 10], ["czubek", "Srak tu naptał.", 11], ["most", "Częściowo zwodzony. Od dawna nikt go nie naprawiał.", 8], ["fosę", "Jest w niej wskaźnik - pokazuje 8.5 m. głębokości.", 8], ["bramę", "Ciężka, z żelaznymi okuciami. Na każdym skrzydle jest kołatka, a na górze widać herb Ks. Bolka", 9], ["rzeczkę", "10 m. szerokości, płynie dość leniwie.", 13], ["dróżkę", "Zwykła, polna dróżka", 13], ["mostek", "Uważaj, bo się może pod tobą rozpaść!", 14], ["poręcze", "Jak widzisz - prawie ich nie ma.", 14], ["podwórko", "Typowe wiejskie podwórko, dosyć zadbane.", 15], ["sławojkę", "Typowa wiejska sławojka z otworkiem.", 15], ["oborę", "Połączona z domem", 15], ["dom", "Drewniany.", 15], ["sławojkę", "Dosyć wygodna, aczkolwiek wygląda na lekko przepełnioną. Cuchnie nieludzko.", 17], ["dziurę", "Na krawędzi są jakieś białe ślady.", 17], ["muchy", "Ten gatunek lubił Eepchy!!", 17], ["mur", "Betonowy. Na wierzchu jest drut kolczasty.", 18], ["furtkę", "żelazna - na oko 40 mm grubości.", 18], ["zamki", "Jesteś zbyt kiepskim włamywaczem by je otworzyć.", 18], ["klamkę", "Dosyć dziwnej konstrukcji.", 18], ["druty", "Kolczasty - i chyba pod napięciem.", 18], ["pokój", "40 m powierzchni", 23], ["dywan", "Perski.", 23], ["regał", "Jest na nim telewizor i masa książek.", 23], ["stół", "Zwyczajny. Stoi przy nim fotel.", 23], ["szafa", "Zamknięta na klucz.", 23], ["bar", "Typowy bar III kategorii (masa piwa i żuli).", 21], ["ladę", "Nieco zalana piwem.", 22], ["cennik", "Jest tu coś napisane.", 22], ["żuli", "Lepiej im się nie przyglądaj za mocno.", 22], ["żula", "Którego?", 22], ["klatkę", "Mocna, żelazna.", 24], ["Eepcha", "Bardzo wygłodzony.", 24], ["eepcha", "Bardzo wygłodzony.", 24], ["komórkę", "Drewniana.", 24], ["słoik", "Ale który??", 25], ["słoiki", "W środku jest żarcie dla Eepcha!", 25], ["wyłącznik", "Do furtki.", 23]], "cmds": [["patrzę", "look", null], ["quit", "quit", null], ["koniec", "quit", null], ["spis", "inv", null], ["inv", "inv", null], ["i", "inv", null], ["badam", "examine", null], ["oglądam", "examine", null], ["help", "help", null], ["pomocy", "help", null], ["słówka", "words", null], ["północ", "move", null], ["południe", "move", null], ["wschód", "move", null], ["zachód", "move", null], ["góra", "move", null], ["dół", "move", null], ["pn", "move", 0], ["pd", "move", 1], ["w", "move", 2], ["z", "move", 3], ["g", "move", 4], ["d", "move", 5], ["sprawdzam", "examine", null], ["biorę", "take", null], ["zabieram", "take", null], ["podnoszę", "take", null], ["czytam", "read", null], ["rzucam", "drop", null], ["zostawiam", "drop", null], ["opuszczam", "drop", null], ["piję", "drink", null], ["zabijam", "kill", null], ["atakuję", "kill", null], ["morduję", "kill", null], ["łowię", "fish", null], ["wyławiam", "fish", null], ["otwieram", "open", null], ["zamykam", "close", null], ["daję", "give", null], ["sram", "poop", null], ["podcieram", "wipe", null], ["siadam", "sit", null], ["wstaję", "stand", null], ["kupuję", "buy", null], ["ścinam", "chop", null], ["rąbię", "chop", null], ["szykuję", "craft", null], ["składam", "craft", null], ["wyłączam", "power", null], ["karmię", "feed", null], ["kopię", "dig", null], ["jem", "eat", null]]};
+const NOWHERE = 0, CARRIED = 255;
+const logEl = document.getElementById('log');
+const cmdEl = document.getElementById('cmd');
+const goEl = document.getElementById('go');
+let S, o1, o2, history = [], histPos = 0;
+
+const fold = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l');
+const eq = (a, b) => a !== null && fold(a) === fold(b);
+const hasArg = () => o2 !== null;
+const isBeer = () => hasArg() && fold(o2).startsWith('piwo');
+
+function say(text, cls) {
+  const p = document.createElement('p');
+  if (cls) p.className = cls;
+  p.textContent = text;
+  logEl.appendChild(p);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function banner() {
+  say('Pięć gówien Eepcha', 'banner-title');
+  say('Wersja 2026 mini HTML - poprawiona', 'banner-note');
+}
+
+function newGame() {
+  S = {loc: 0, money: 50000, zatoczka: 0, rybak: 0, sram: 0, szkat: 0, prad: 0, gosp: 0, drzewo: 0, siad: 0,
+       item: 0, ended: false, confirmQuit: false, exits: D.exits.map(r => r.slice()), obj: D.obj.slice()};
+}
+
+function itemFind(name) {
+  for (let i = 1; i <= 22; i++) if (eq(D.names[i], name)) return i;
+  return 0;
+}
+
+function check() {
+  if (!hasArg()) { say('Ale co ??'); return false; }
+  S.item = itemFind(o2);
+  if (!S.item) { say('Nie znam takiego przedmiotu.'); return false; }
+  return true;
+}
+
+function checkCarried() {
+  if (S.obj[S.item] !== CARRIED) { say('Nie niesiesz tego przedmiotu!'); return false; }
+  return true;
+}
+
+function listItems(where) {
+  const out = [];
+  for (let i = 1; i <= 22; i++) if (S.obj[i] === where) out.push(D.names[i]);
+  return out;
+}
+
+function inv() {
+  const l = listItems(CARRIED);
+  say('Niesiesz: ' + (l.length ? l.join(', ') : 'nic'), 'list');
+}
+
+function endGame(lines) {
+  lines.forEach(l => say(l));
+  say('Grasz jeszcze raz? (T/N)');
+  S.ended = true;
+}
+
+function special() {
+  const s = S;
+  if (s.loc === 4 && s.szkat !== 0) say('W wykopanym dołku leży ' + (s.szkat === 2 ? 'otwarta ' : '') + 'szkatuła.');
+  if (s.loc === 5 && s.rybak !== 2) {
+    say('Jest tu stary, zalany rybak.' + (s.rybak === 0 ? ' Mówi, że chciałby się czegoś napić.' : ' Mówi, że poszedłby na rybki.'));
+  }
+  if (s.loc === 13 && s.zatoczka === 0) say('W zatoczce po drugiej stronie rzeczki pływa sobie gówno.');
+  if (s.loc === 1 && s.drzewo === 1) say('Drzewo jest ścięte.');
+  if (s.loc === 23 && s.gosp === 1) say('Gospodarz nie żyje.');
+  const dung = [4, 13, 15, 17, 20];
+  if (dung.every(i => s.obj[i] === CARRIED)) {
+    dung.forEach(i => { s.obj[i] = NOWHERE; });
+    s.obj[21] = CARRIED;
+    say('Ha!');
+    inv();
+  }
+  if (s.sram === 1) say('Swędzi cię dupa.');
+}
+
+function location() {
+  if (S.loc === 0) {
+    D.text[0].forEach(t => say(t));
+    S.loc = 1;
+  }
+  D.text[S.loc].forEach(t => say(t));
+  special();
+  const here = listItems(S.loc);
+  say('Widzisz: ' + (here.length ? here.join(', ') : 'nic'), 'list');
+  const ex = [];
+  for (let d = 0; d < 6; d++) if (S.exits[d][S.loc]) ex.push(D.dirs[d]);
+  say('Wyjścia: ' + (ex.length ? ex.join(', ') : 'nie ma'), 'list');
+}
+
+function sign() {
+  if (S.loc === 4) { say(' Tu leży\n  Johny Mc Vawakh (1921-1991)\nOstatni hodowca i obrońca Eepchów'); }
+  if (S.loc === 9) { say(' Zamek księcia Bolka Miękkiego\nPana Wałlandii i Wysp Jeulandzkich\n Nieupoważnionym wstęp wzbroniony.'); }
+  if (S.loc === 18) { say(' Uwaga! Klamka i druty pod napięciem!'); }
+}
+
+const H = {
+  look: location,
+  quit() { say('Czy jesteś pewien (T/N)?'); S.confirmQuit = true; },
+  inv,
+  help() { say(D.help[S.loc] || 'Rusz wreszcie tym swoim łbem!!'); },
+  words() { say('Słówka: ' + D.cmds.map(c => c[0]).join(', ')); },
+  move(arg) {
+    if (S.siad) { say('Chcesz chodzić na siedząco ??'); return; }
+    const d = arg !== null ? arg : D.dirs.findIndex(n => eq(n, o1));
+    const t = S.exits[d][S.loc];
+    if (!t) { say('Nie możesz iść w tym kierunku !!'); return; }
+    if (t === 149) {
+      if (S.obj[9] !== CARRIED) { S.loc = 21; location(); } else say('Chcesz wyjść razem z kuflem?');
+      return;
+    }
+    if (t === 152) {
+      if (S.prad === 1) { S.loc = 24; location(); } else endGame(['Kopnął cię prąd. Jesteś nieżywy.', 'Gra jest skończona... Chyba nie żyjesz!']);
+      return;
+    }
+    S.loc = t;
+    location();
+  },
+  take() {
+    if (eq(o2, 'gówno')) { say('Musisz jeszcze podać jego numer!'); return; }
+    if (!check()) return;
+    if (S.obj[S.item] !== S.loc) { say('Nie ma tu tego przedmiotu!'); return; }
+    S.obj[S.item] = CARRIED;
+    say('O.k.');
+    inv();
+  },
+  examine() {
+    if (!hasArg()) { say('Ale co ??'); return; }
+    if (eq(o2, 'portfel')) { say('Masz w nim ' + S.money + ' złotych.'); return; }
+    S.item = itemFind(o2);
+    if (S.item) { if (checkCarried()) say(D.desc[S.item]); return; }
+    if (eq(o2, 'tabliczkę')) { sign(); return; }
+    const sc = D.scenery.find(e => eq(e[0], o2) && e[2] === S.loc);
+    say(sc ? sc[1] : 'Nie możesz tego obejrzeć!');
+  },
+  read() {
+    if (eq(o2, 'tabliczkę')) { sign(); return; }
+    if (eq(o2, 'cennik')) {
+      if (S.loc !== 22) say('Ale tu go nie ma !!');
+      else say('Hamburger - 10000 zł.\nPiwo Leżajsk - 7500 zł\nPiwo Okocim - 6800 zł\nPiwo kuflowe - 4000 zł');
+      return;
+    }
+    if (!check()) return;
+    say(D.read[S.item] || 'Nic tu nie ma napisanego.');
+  },
+  drop() {
+    if (eq(o2, 'gówno')) { say('Musisz jeszcze podać jego numer!'); return; }
+    if (!check() || !checkCarried()) return;
+    S.obj[S.item] = S.loc;
+    inv();
+  },
+  drink() {
+    if (isBeer()) {
+      const idx = D.names.findIndex((n, i) => i >= 7 && i <= 9 && eq(n, o2));
+      const targets = idx > 0 ? [idx] : [7, 8, 9];
+      const have = targets.filter(i => S.obj[i] === CARRIED);
+      if (!have.length) { say(idx > 0 ? 'Nie niesiesz tego przedmiotu!' : 'Chyba śnisz.'); return; }
+      have.forEach(i => { S.obj[i] = NOWHERE; });
+      say('O.k.');
+      inv();
+      return;
+    }
+    if (!hasArg() || eq(o2, 'wodę')) {
+      if ([19, 20, 10].includes(S.loc)) say('A fe! Słona!');
+      else if ([14, 13].includes(S.loc)) say('O.k.');
+      else say('Tu nie ma żadnej wody!');
+      return;
+    }
+    say('To niemożliwe.');
+  },
+  kill() {
+    if (eq(o2, 'gospodarza')) {
+      if (S.loc !== 23) say('Nie ma go tu.');
+      else if (S.gosp === 1) say('Drugi raz ??');
+      else { S.gosp = 1; say('Gospodarz pada na mordę nieżywy.'); }
+      return;
+    }
+    if (eq(o2, 'rybaka')) {
+      say(S.loc !== 5 || S.rybak === 2 ? 'Ale go tu nie ma!' : 'Nic z tego! Dostajesz tylko w ryło.');
+      return;
+    }
+    if (S.loc === 3) {
+      endGame(['Niestety, po ciemku nie widzisz, kogo atakujesz. Dostajesz w łeb i kończy Ci się wizja i fonia.', 'Gra jest skończona... Chyba nie żyjesz!']);
+      return;
+    }
+    if (eq(o2, 'żula') || eq(o2, 'żuli')) {
+      say(S.loc !== 22 ? 'Nie tutaj.' : 'Dostajesz w ryło tak potężnie, że lądujesz pod drzwiami.');
+      return;
+    }
+    say(hasArg() ? 'To niemożliwe.' : 'Ale kogo ??');
+  },
+  fish() {
+    if (![10, 19, 20, 13, 14, 8].includes(S.loc)) { say('Idiota! To się robi nad wodą!'); return; }
+    if (hasArg() && !eq(o2, 'gówno')) { say('Nic z tego.'); return; }
+    if (S.obj[12] !== CARRIED) { say('Ciekawe, czym!!'); return; }
+    if (S.loc === 13) {
+      if (S.zatoczka === 1) { say('A po co ?'); return; }
+      S.obj[13] = 13;
+      S.zatoczka = 1;
+      say('Wyciągnąłeś przepiękne gówno!');
+      return;
+    }
+    say('Kiepsko dziś biorą...');
+  },
+  open() {
+    if (!hasArg()) { say('Ale co ??'); return; }
+    if (!eq(o2, 'szkatułę')) { say('Nic tu się nie da otworzyć.'); return; }
+    if (S.obj[2] !== CARRIED) { say('Nie masz klucza!'); return; }
+    if (S.loc !== 4 || S.szkat === 0) { say('Nic tu takiego nie ma.'); return; }
+    if (S.szkat === 2) { say('Ale ona jest już otwarta!'); return; }
+    if (S.szkat === 3) { say('A w środku nic nie ma ...'); S.szkat = 2; return; }
+    S.szkat = 2;
+    S.obj[4] = 4;
+    say('Wieko odpadło z trzaskiem ... W środku leży ... Gówno 1 !!!');
+  },
+  close() {
+    if (!hasArg()) { say('Ale co ??'); return; }
+    if (!eq(o2, 'szkatułę')) { say('Nie widzę tu nic do zamknięcia.'); return; }
+    if (S.loc !== 4 || S.szkat === 0) { say('Nic tu takiego nie ma.'); return; }
+    if (S.szkat === 1 || S.szkat === 3) { say('Ale ona jest zamknięta!'); return; }
+    say('O.K.');
+    S.szkat = 3;
+    if (S.obj[4] === 4) { S.szkat = 1; S.obj[4] = NOWHERE; }
+  },
+  give() {
+    if (S.loc === 5 && S.rybak === 0) {
+      if (!hasArg()) { say('Ale co ??'); return; }
+      if (!isBeer()) { say('Chcesz w ryj? Daj to, o co prosi!'); return; }
+      if (S.obj[7] !== CARRIED && S.obj[8] !== CARRIED) { say('Chyba śnisz.'); return; }
+      say('Rybak bierze całe twoje piwo.');
+      S.obj[7] = NOWHERE;
+      S.obj[8] = NOWHERE;
+      S.rybak = 1;
+      say('W zamian daje Ci żyłkę.');
+      S.obj[10] = S.loc;
+      return;
+    }
+    if (S.loc === 5 && S.rybak === 1) {
+      if (!eq(o2, 'wędzisko')) { say('A po co mu to ?'); return; }
+      if (S.obj[12] !== CARRIED) { say('Chcesz go oszukać ?'); return; }
+      S.obj[12] = NOWHERE;
+      S.rybak = 2;
+      S.obj[14] = CARRIED;
+      say('Rybak daje ci ogromną siekierę.');
+      return;
+    }
+    if (S.loc === 9 && eq(o2, 'gówna')) {
+      if (S.obj[21] !== CARRIED) endGame(['Za kantowanie - ścięcie łba!', 'Gra jest skończona... Chyba nie żyjesz!']);
+      else endGame(['Wygrałeś!!!!!!!!!!!', 'Ha! Ha!']);
+      return;
+    }
+    say('To ci się chyba nie uda.');
+  },
+  poop() {
+    if (S.sram === 1) { say('Ale nie chce ci się!'); return; }
+    if (S.loc === 17) { say('Gówno wpada z mokrym plaskiem do szamba.'); return; }
+    S.obj[17] = S.loc;
+    S.sram = 1;
+    say('Zrobiłeś przepiękne gówno!');
+  },
+  wipe() {
+    if (S.obj[16] !== CARRIED) { say('Czym? Ręką?!!'); return; }
+    if (S.sram !== 1) { say('I po co ?'); return; }
+    say('SZURU - BURU !');
+    S.obj[16] = NOWHERE;
+    S.obj[18] = CARRIED;
+    S.sram = 2;
+  },
+  sit() { S.siad = 1; say('Ale dobrze...'); },
+  stand() { S.siad = 0; say('Ok.'); },
+  buy() {
+    const shop = [['hamburgera', 10000, 6], ['piwo Leżajsk', 7500, 7], ['piwo Okocim', 6800, 8], ['piwo kuflowe', 4000, 9]];
+    if (!hasArg()) { say('Ale co ??'); return; }
+    if (S.loc !== 22) { say('Przecież handel obwoźny jest zabroniony.'); return; }
+    const e = shop.find(x => eq(x[0], o2));
+    if (!e) { say('Niestety, tego nie prowadzimy.'); return; }
+    if (S.money < e[1]) { say('Nie stać cię!'); return; }
+    S.money -= e[1];
+    S.obj[e[2]] = CARRIED;
+    say('Masz jeszcze ' + S.money + ' zł.');
+    inv();
+  },
+  chop() {
+    if (!hasArg()) { say('Ale co ??'); return; }
+    if (S.obj[14] !== CARRIED) { say('Ciekawe, czym?'); return; }
+    if (!eq(o2, 'drzewo')) { say('Akurat!'); return; }
+    if (S.loc === 1) {
+      if (S.drzewo === 1) { say('Drzewo jest już ścięte.'); return; }
+      S.drzewo = 1;
+      S.obj[15] = 1;
+      S.exits[4][1] = 0;
+      say('Drzewo wali się z ogromnym hukiem, a gówno z czubka spada u twych stóp.');
+      return;
+    }
+    say(S.loc === 12 ? 'Możesz sobie tak rąbać. Tu jest sporo drzew.' : 'Coś ci odbiło ?');
+  },
+  craft() {
+    if (!eq(o2, 'wędkę')) { say('Sraty-taty.'); return; }
+    if (S.obj[5] !== CARRIED || S.obj[10] !== CARRIED || S.obj[11] !== CARRIED) { say('Nie masz czym.'); return; }
+    S.obj[5] = S.obj[10] = S.obj[11] = NOWHERE;
+    S.obj[12] = CARRIED;
+    say('Masz teraz ogromne wędzisko!');
+  },
+  power() {
+    if (hasArg() && !eq(o2, 'prąd') && !eq(o2, 'wyłącznik')) { say('Nie uda ci się to.'); return; }
+    if (S.loc !== 23) { say('Nie ma tu nigdzie wyłącznika.'); return; }
+    if (S.prad === 1) { say('Ale już to zrobiłeś!!'); return; }
+    S.prad = 1;
+    say('O.K.');
+  },
+  feed() {
+    if (!hasArg()) { say('Ale kogo ??'); return; }
+    if (eq(o2, 'żula')) { say(S.loc !== 22 ? 'Tu nie ma takiego.' : 'Nic z tego, dostałeś w ryło.'); return; }
+    if (eq(o2, 'rybaka')) { say(S.loc !== 5 || S.rybak === 2 ? 'Tu nie ma takiego.' : 'On nie jest głodny.'); return; }
+    if (eq(o2, 'eepcha')) {
+      if (S.loc !== 24) { say('A gdzie go widzisz ?'); return; }
+      if (S.obj[19] !== CARRIED) { say('Ale nie masz dla niego żarcia!'); return; }
+      S.obj[19] = NOWHERE;
+      S.obj[20] = S.loc;
+      say('Eepch się nażarł - i z wdzięczności nasrał ci pod nogi !');
+      return;
+    }
+    say('Ciekawe, jak chcesz to zrobić!');
+  },
+  dig() {
+    if (S.obj[3] !== CARRIED) { say('Ale czym ??'); return; }
+    if (S.loc !== 4) { say('Wykopałeś przepiękny dołek.'); return; }
+    if (S.szkat === 1) { say('Masz zadatki na kopacza rowów.'); return; }
+    S.szkat = 1;
+    say('Wykopałeś (oprócz kości) starą szkatułę.');
+  },
+  eat() {
+    if (!check() || !checkCarried()) return;
+    const e = D.eat[S.item];
+    say(e[0]);
+    if (e[1]) S.obj[S.item] = NOWHERE;
+  }
+};
+
+function submit(text) {
+  text = text.trim().replace(/\s+/g, ' ');
+  if (!text) return;
+  say('> ' + text, 'echo');
+  if (S.ended) {
+    if (fold(text).startsWith('n')) { say('Do widzenia.'); cmdEl.disabled = goEl.disabled = true; }
+    else { logEl.textContent = ''; newGame(); banner(); location(); }
+    return;
+  }
+  if (S.confirmQuit) {
+    S.confirmQuit = false;
+    if (fold(text).startsWith('t')) { say('Do widzenia.'); cmdEl.disabled = goEl.disabled = true; return; }
+  }
+  const sp = text.indexOf(' ');
+  o1 = sp < 0 ? text : text.slice(0, sp);
+  o2 = sp < 0 ? null : text.slice(sp + 1);
+  const c = D.cmds.find(e => eq(e[0], o1));
+  if (!c) { say('Nie znam takiego polecenia.'); return; }
+  H[c[1]](c[2]);
+}
+
+function fire() {
+  const v = cmdEl.value;
+  cmdEl.value = '';
+  if (v.trim()) { history.push(v); histPos = history.length; }
+  submit(v);
+}
+
+cmdEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') fire();
+  else if (e.key === 'ArrowUp' && histPos > 0) { histPos--; cmdEl.value = history[histPos]; e.preventDefault(); }
+  else if (e.key === 'ArrowDown') { histPos = Math.min(histPos + 1, history.length); cmdEl.value = history[histPos] || ''; e.preventDefault(); }
+});
+goEl.addEventListener('click', () => { fire(); cmdEl.focus(); });
+
+newGame();
+banner();
+location();
+cmdEl.focus();
+})();
+</script>
+</body>
+</html>
