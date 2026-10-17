@@ -1,0 +1,253 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  # Toolchain image, not project specific: .NET SDK + Godot editor plus
+  # export templates, for multiplatform exports. The owner prefix is added
+  # at runtime - GHCR rejects pushes to unowned package paths. The name is
+  # project scoped because GitHub shares packages only with the repository
+  # that pushed them (the package settings can grant access to more).
+  IMAGE_NAME: 5ge-godot-dotnet-multiplatform-builder
+
+jobs:
+  # Runs before any code build. Builds the reference image only when the
+  # exact image is not in the registry yet; otherwise it just reports that
+  # the image is there. Either way the code build below waits for this job.
+  image:
+    name: Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.toolchain.outputs.tag }}
+      name: ${{ steps.toolchain.outputs.name }}
+      image: ${{ steps.toolchain.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Toolchain versions
+        id: toolchain
+        run: |
+          set -euo pipefail
+          eval "$(bash _tools/install_deps.sh --print-versions)"
+          # Artifact names come from the repository, lowercased.
+          name="$(basename "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          owner="$(basename "$(dirname "$GITHUB_REPOSITORY")" | tr '[:upper:]' '[:lower:]')"
+          {
+            echo "channel=$DOTNET_CHANNEL"
+            echo "quality=$DOTNET_QUALITY"
+            echo "godot=$GODOT_TAG"
+            echo "tag=$(bash _tools/image-tag.sh)"
+            echo "name=$name"
+            echo "image=${owner}/${IMAGE_NAME}"
+          } >> "$GITHUB_OUTPUT"
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check registry
+        id: check
+        run: |
+          set -euo pipefail
+          image="${{ env.REGISTRY }}/${{ steps.toolchain.outputs.image }}:${{ steps.toolchain.outputs.tag }}"
+          if docker manifest inspect "$image" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Image already in registry, skipping build: $image"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Image missing, it will be built: $image"
+          fi
+      - name: Setup Buildx
+        if: steps.check.outputs.exists == 'false'
+        uses: docker/setup-buildx-action@v4
+      - name: Build and push image
+        if: steps.check.outputs.exists == 'false'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          build-args: |
+            DOTNET_CHANNEL=${{ steps.toolchain.outputs.channel }}
+            DOTNET_QUALITY=${{ steps.toolchain.outputs.quality }}
+            GODOT_TAG=${{ steps.toolchain.outputs.godot }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.toolchain.outputs.image }}:${{ steps.toolchain.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ steps.toolchain.outputs.image }}:latest
+
+  # needs the image job, so the image either already existed or is built
+  # before any export starts.
+  build:
+    name: Build
+    needs: [image]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull builder image
+        run: docker pull ${{ env.REGISTRY }}/${{ needs.image.outputs.image }}:${{ needs.image.outputs.tag }}
+      - name: Export Linux
+        run: docker run --rm -v "$GITHUB_WORKSPACE:/ws" -w /ws ${{ env.REGISTRY }}/${{ needs.image.outputs.image }}:${{ needs.image.outputs.tag }} bash build_linux.sh
+      - name: Export Windows
+        run: docker run --rm -v "$GITHUB_WORKSPACE:/ws" -w /ws ${{ env.REGISTRY }}/${{ needs.image.outputs.image }}:${{ needs.image.outputs.tag }} bash build_windows.sh
+      - name: Upload Linux build
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ needs.image.outputs.name }}-linux-x86_64
+          path: build/linux/
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ needs.image.outputs.name }}-windows-x86_64
+          path: build/windows/
+      # Minimal payloads: only what a rebuild actually changes. The engine
+      # binary and the .NET runtime ship in the full artifacts above.
+      - name: Upload Linux build (minimal)
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ needs.image.outputs.name }}-linux-x86_64-min
+          path: |
+            build/linux/*.pck
+            build/linux/data_*/EepchGodot.dll
+            build/linux/data_*/EepchGodot.*.yaml
+      - name: Upload Windows build (minimal)
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ needs.image.outputs.name }}-windows-x86_64-min
+          path: |
+            build/windows/*.pck
+            build/windows/data_*/EepchGodot.dll
+            build/windows/data_*/EepchGodot.*.yaml
+
+  # Rolling release: one permanent "latest" release whose assets are
+  # replaced in place on every push to main, so only the newest build is
+  # ever available. A failed build publishes nothing and leaves the
+  # previous release untouched. The concurrency group serializes release
+  # jobs so two quick pushes cannot interleave tag edits and uploads.
+  release:
+    name: Release
+    needs: [image, build]
+    if: >-
+      needs.build.result == 'success' &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+       github.event_name == 'workflow_dispatch')
+    concurrency:
+      group: release-latest
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    env:
+      PROJECT_NAME: ${{ needs.image.outputs.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Download Linux build
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.image.outputs.name }}-linux-x86_64
+          path: dist/linux
+      - name: Download Windows build
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.image.outputs.name }}-windows-x86_64
+          path: dist/windows
+      - name: Download Linux build (minimal)
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.image.outputs.name }}-linux-x86_64-min
+          path: dist/linux-min
+      - name: Download Windows build (minimal)
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.image.outputs.name }}-windows-x86_64-min
+          path: dist/windows-min
+      - name: Package
+        run: |
+          set -euo pipefail
+          _tools/zip-dir.sh dist/linux "${PROJECT_NAME}-linux-x86_64.zip"
+          _tools/zip-dir.sh dist/windows "${PROJECT_NAME}-windows-x86_64.zip"
+          _tools/zip-dir.sh dist/linux-min "${PROJECT_NAME}-linux-x86_64-min.zip"
+          _tools/zip-dir.sh dist/windows-min "${PROJECT_NAME}-windows-x86_64-min.zip"
+          ls -la *.zip
+      - name: Prune stale assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: latest
+        run: |
+          set -euo pipefail
+          # Comma-wrapped list: anything outside it is from an older build or
+          # an older name (asset names are case-insensitive, so renames
+          # collide). Built here, not in YAML: folded scalars add spaces.
+          keep=",$PROJECT_NAME-linux-x86_64.zip,$PROJECT_NAME-windows-x86_64.zip,"
+          keep+="$PROJECT_NAME-linux-x86_64-min.zip,$PROJECT_NAME-windows-x86_64-min.zip,"
+          # Nothing to prune on the first publish: there is no release yet.
+          if ! gh release view "$TAG" --json assets >/dev/null 2>&1; then
+              echo "no $TAG release yet, nothing to prune"
+              exit 0
+          fi
+          gh release view "$TAG" --json assets --jq '.assets[].name' | while IFS= read -r name; do
+              case "$keep" in
+                  *",$name,"*) ;;
+                  *) echo "removing stale asset $name"
+                     gh release delete-asset "$TAG" "$name" --yes ;;
+              esac
+          done
+      - name: Publish rolling release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: latest
+        run: |
+          set -euo pipefail
+          # GitHub keeps the original published_at on an edited release, so
+          # the page's "released N ago" is the first build. Date the notes:
+          # local time for humans, UTC alongside it to stay unambiguous.
+          # The zone name picks CET or CEST on its own; LC_ALL=C keeps the
+          # month name English regardless of the runner locale.
+          TZ_NAME=Europe/Stockholm
+          NOTES="Automated build of ${GITHUB_SHA} at $(TZ=$TZ_NAME LC_ALL=C date +'%Y-%m-%d %H:%M %Z') ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes "$NOTES" --latest
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes "$NOTES" --latest
+          fi
+          # gh release edit --target leaves a lightweight tag where it is, so
+          # the tag would keep pointing at the first published build. Move it.
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push --force origin "refs/tags/$TAG"
+          echo "tag $TAG -> $(git rev-parse "$TAG")"
+          # Clobbering races GitHub's asset deletion, so retry briefly.
+          upload() {
+              local zip="$1" attempt
+              for attempt in 1 2 3 4 5; do
+                  if gh release upload "$TAG" "$zip" --clobber; then
+                      return 0
+                  fi
+                  echo "upload of $zip failed (attempt $attempt), retrying"
+                  sleep 10
+              done
+              echo "giving up on $zip"
+              return 1
+          }
+          for zip in *.zip; do
+              upload "$zip"
+          done
+          gh release view "$TAG" --json url,tagName --jq '"published " + .tagName + ": " + .url'
